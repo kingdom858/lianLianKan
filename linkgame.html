@@ -1,0 +1,704 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+<title>车标连连看</title>
+<style type="text/css">
+<!--
+td {
+	height: 100px;
+	width: 100px;
+	border: 1px solid #d0e3e8;
+	text-align: center;
+}
+* {
+	margin: 0px;
+	padding: 0px;
+}
+ul, li, ol {
+	list-style-image: none;
+	list-style-type: none;
+}
+table tr td img {
+	height: 80px;
+	width: 80px;
+	cursor:pointer;
+}
+body {
+	text-align: center;
+	font-size: 14px;
+}
+.clicked{
+width:75px;
+height:75px;
+border:4px #9fb9f3 solid}
+.bg {
+	background-image: url(images/menuebghover.png);
+	background-repeat: no-repeat;
+}
+.hover {
+	background-image: url(images/menuebg.png);
+	background-repeat: no-repeat;
+}
+#menue {
+	position: absolute;
+	right: 10px;
+	top: 10px;
+	width: 160px;
+}
+#menue li{
+	margin-bottom: 10px;
+	height: 30px;
+	width: 120px;
+	cursor:pointer;
+	line-height: 25px;
+	font-size: 14px;
+	font-weight: bolder;
+}
+#main {
+	background-repeat: no-repeat;
+	background-position: center top;
+	height: 100%;
+	width:100%;
+	margin-right: auto;
+	margin-left: auto;
+	position: relative;
+}
+#tab {
+	margin-right: auto;
+	margin-left: auto;
+}
+#box {
+	position: absolute;
+	height: 18px;
+	width: 396px;
+	border: 2px solid #c0c0c0;
+	left: 108px;
+	top: 10px;
+	line-height: 18px;
+	z-index: 9999;
+	font-family: "黑体";
+	font-size: 16px;
+}
+#timebar {
+	height: 22px;
+	position: absolute;
+	left: 108px;
+	top: 10px;
+}
+#tbox {
+	position: absolute;
+	left:0px;
+	top: 120px;
+	width: 100%;
+	height: 600px;
+}
+table{
+border-collapse:collapse;}
+#diff {
+	height: 30px;
+	width: 400px;
+	position: absolute;
+	left: 108px;
+	top: 40px;
+}
+#diff li {
+	float: left;
+	width: 100px;
+	line-height: 30px;
+	padding-left: 30px;
+	vertical-align: middle;
+}
+#numli, #scoreli{
+	background-image: url(images/numbg.png);
+	background-repeat: no-repeat;
+}
+#diff li img{
+   cursor:pointer;
+}
+#num,#score {
+	font-size: 24px;
+	color: #FF0000;
+}
+#rule {
+	position: absolute;
+	top: 291px;
+	width: 120px;
+	right: 51px;
+	background-image: url(images/rulebg.png);
+	background-repeat: no-repeat;
+	height: 110px;
+	background-position: center center;
+	font-size: 12px;
+	line-height: 20px;
+	padding-top: 10px;
+	padding-right: 20px;
+	padding-left: 20px;
+}
+#rulec {
+	position: absolute;
+	height: 75px;
+	width: 50px;
+	left: 699px;
+	top: 349px;
+	cursor:pointer;
+}
+.on{
+display:none;}
+-->
+</style>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript">
+
+
+var r//行数
+var c//列数
+var t;//图片种类数
+var level;//当前关数
+var loc=location.href;
+var imgpath;
+imgpath=loc.indexOf("?imgp=")==-1?"carico":loc.substring(loc.indexOf("?imgp")+6,loc.indexOf("?imgp")+12);//图片的路径
+r=loc.indexOf("?diff=")==-1?7:eval(loc.substring(loc.indexOf("?diff")+6,loc.indexOf("?diff")+12).substring(0,2));
+c=loc.indexOf("?diff=")==-1?10:eval(loc.substring(loc.indexOf("?diff")+6,loc.indexOf("?diff")+12).substring(3,5));
+level=loc.indexOf("?leve=")==-1?1:eval(loc.substring(loc.indexOf("?leve")+6,loc.indexOf("?leve")+7));
+level=level<1?1:level;
+t=14+2*(level-1);
+var tt=(r-2)*(c-2);//图片总张数
+var count=0;//已经消除的对数	
+var score=0;
+if(loc.indexOf("?leve=")==-1){
+	score=0;
+	//alert(score);
+}else{
+	var s=loc.substring(loc.indexOf("leve"));
+	if(s.indexOf("?")!=-1){
+		s=s.substring(0,s.indexOf("?"));	
+	}
+	score=eval(s.substring(6));	
+	//alert(score);
+}
+//alert(score);
+var src1=0;
+var src2=0;
+var index1=-1;
+var index2=-1;
+
+
+
+$(function(){
+	playbgMusic();
+	init();
+//*****************************************初始化表格与图片*******************************************//
+function init(){
+	//构造中介数组arr[]
+	var cellArr=new Array(tt);
+	for(var i=0;i<tt;i++){
+    	cellArr[i]=0;
+	}
+	 //品牌数组 
+	var brandArr =["lanbojini","falali","laosilaisi","aodi","kaidilake","benchi","dazhong","baoma","baoshijie","xuefulan","luhu","binli","baoshijie"];
+
+	for(var i=0;i<tt;i+=2){
+		//var num = i%brandArr.length;
+		brandArr.sort(function(){return Math.random()>0.5?-1:1;}); //打乱顺序
+		var brandName =brandArr[0];//已打乱顺序，直接取第一个
+		cellArr[i]=brandName+"_label";
+		cellArr[i+1]=brandName+"_icon";
+	} 
+	cellArr.sort(function(){return Math.random()>0.5?-1:1;}); 
+
+	//构造表格，初始化表格中的图片
+	var m=0;
+	for(var i=0;i<r;i++){
+		var tab=document.getElementById("tab");
+		var tr=tab.insertRow(-1);
+		for(var j=0;j<c;j++){
+			var td=tr.insertCell(-1);
+			if((i==0||i==r-1)||(j==0||j==c-1)){ //第一行、最后一行、第一列、最后一列单元格及图片不显示
+				td.innerHTML="<img title='good !' src='"+imgpath+"/ld.png'>";
+				tab.rows[i].cells[j].style.display="none";
+			}else{
+				td.innerHTML="<img id='"+i+","+j+"' src='"+imgpath+"/"+cellArr[m++]+".png'>";
+			}	
+		}
+	}
+}
+
+
+	/**
+
+
+	//构造中介数组arr[]
+	var arr=new Array(tt);
+	for(var i=0;i<tt;i++){
+    	arr[i]=0;
+	}
+	for(var i=0;i<tt;i++){
+    	if(arr[i]==0){
+				var n=Math.floor(Math.random()*t)+1;//图片种类中任选一个[1,t]
+				arr[i]=n;
+			for(var a=0;a<1;a--){  //arr数组中剩余的项中任选一项的值与arr[i]相等，以保证所有图形都是偶数个
+				var x=Math.round(Math.random()*(tt-i))+i;
+				if(arr[x]==0){
+					arr[x]=n;
+					a=2;
+				}
+			}
+		}	
+	}
+
+	//构造表格，初始化表格中的图片
+	var m=0;
+	for(var i=0;i<r;i++){
+		var tab=document.getElementById("tab");
+		var tr=tab.insertRow(-1);
+		for(var j=0;j<c;j++){
+			var td=tr.insertCell(-1);
+			if((i==0||i==r-1)||(j==0||j==c-1)){ //第一行、最后一行、第一列、最后一列单元格及图片不显示
+				td.innerHTML="<img title='good !' src='"+imgpath+"/i_1.jpg'>";
+				tab.rows[i].cells[j].style.display="none";
+			}else{
+				td.innerHTML="<img src='"+imgpath+"/i_"+arr[m++]+".jpg'>";
+			}	
+		}
+	}
+
+**/
+	
+
+//**********************************判断此图片是否已经被隐藏*****************************************//
+	function fade(ind){
+		return ($("img")[ind+3].title=="good !");//由于点击图片时记录的索引值已经减去了三，所以此处要加上三
+	}
+	
+		
+//**********************************判断图片是否共X轴***********************************************//
+	function onX(ind1,ind2){
+		return (Math.floor(ind1/c)==Math.floor(ind2/c));
+	}
+	
+	
+//**********************************判断图片是否共Y轴***********************************************//	
+	function onY(ind1,ind2){
+		return ((ind1-ind2)%c==0);
+	}
+	
+	
+//**********************************判断图片是否重合***********************************************//	
+	function equal(ind1,ind2){
+		return (ind1==ind2);
+	}
+
+//**********************************判断是否为同一品牌，是否消除***********************************************//	
+	function equalBrand(src1,src2){
+		var isEqual = false;
+		var brand1 = src1.split("_")[0];
+		var brand2 = src2.split("_")[0];
+		if(src1!=src2&&brand1==brand2){
+			isEqual = true;
+		}
+		return isEqual;
+	}
+	
+	
+//**********************************判断两点是否能直线直接连通*************************************//
+	function lineConnect(ind1,ind2){
+		var maxind=ind1>ind2?ind1:ind2;
+		//alert(maxind);
+		ind2=ind1<ind2?ind1:ind2;
+		ind1=maxind;
+		if(equal(ind1,ind2)){
+			return true;
+		}
+		if(onX(ind1,ind2)){
+			//判断是否能横向连通
+			ind2+=1;
+			if(equal(ind1,ind2)){
+				return true;
+        	}
+			else{
+				for(var i=ind2;i<ind1;i++){
+				//alert(i);
+					if(!fade(i)){
+						return false;
+					}
+				}
+				return true;
+			}
+		}
+		else if(onY(ind1,ind2)){
+			//判断是否能纵向连通
+			ind2+=c;
+			if(equal(ind1,ind2)){
+				return true;
+        	}
+			else{
+				for(var j=ind2;j<ind1;j+=c){
+					//alert(j);
+					if(!fade(j)){
+						return false;
+					}
+				}
+				return true;
+			}
+		}
+		else return false;
+	}			
+//**************************************判断两点间能否连通***********************************************//
+	function connect(ind1,ind4){
+		var maxind=ind1>ind4?ind1:ind4;
+		//alert(maxind);
+		ind4=ind1<ind4?ind1:ind4;
+		ind1=maxind;
+		//共线且能直接连通
+		if((onX(ind1,ind4)||onY(ind1,ind4))&&lineConnect(ind1,ind4)){
+			return true;
+		}
+		//共X轴但不能直接连通,纵向扫描
+		if(onX(ind1,ind4)){
+			for(var i=0;i<r;i++){
+				var ind2=ind1%c+i*c;
+				var ind3=ind4%c+i*c;
+				if(!fade(ind2)||!fade(ind3)){
+					continue;
+				}
+				if(lineConnect(ind1,ind2)&&lineConnect(ind2,ind3)&&lineConnect(ind3,ind4)){
+					return true;
+				}
+			}
+			
+		}
+		
+		
+		//共Y轴但不能直接连通，横向扫描
+		if(onY(ind1,ind4)){
+			for(var i=0;i<c;i++){
+				var ind2=ind1-(ind1%c)+i;
+				var ind3=ind4-(ind4%c)+i;
+				if(!fade(ind2)||!fade(ind3)){
+					continue;
+				}
+				if(lineConnect(ind1,ind2)&&lineConnect(ind2,ind3)&&lineConnect(ind3,ind4)&&fade(ind2)&&fade(ind3)){
+					return true;
+				}
+			}
+			
+		}
+		
+		
+		//不共线,分别沿X轴Y轴扫描
+		//先沿着Y轴扫描
+		for(var i=0;i<r;i++){
+			var ind2=ind1%c+i*c;
+			var ind3=ind4%c+i*c;
+			if(equal(ind1,ind2)){
+				if(lineConnect(ind2,ind3)&&lineConnect(ind3,ind4)&&fade(ind3)){
+					return true;
+				}
+			}
+			if(equal(ind3,ind4)){
+				if(lineConnect(ind1,ind2)&&lineConnect(ind2,ind3)&&fade(ind2)){
+					return true;
+				}
+			}
+			if(!fade(ind2)||!fade(ind3)){
+				continue;
+			}
+			if(lineConnect(ind1,ind2)&&lineConnect(ind2,ind3)&&lineConnect(ind3,ind4)){
+				return true;
+			}
+		}
+		
+		
+		//再沿着X轴扫描
+		for(var i=0;i<c;i++){
+			var ind2=ind1-(ind1%c)+i;
+			var ind3=ind4-(ind4%c)+i;
+			if(equal(ind1,ind2)){
+				if(lineConnect(ind2,ind3)&&lineConnect(ind3,ind4)&&fade(ind3)){
+					return true;
+				}
+			}
+			if(equal(ind3,ind4)){
+				if(lineConnect(ind1,ind2)&&lineConnect(ind2,ind3)&&fade(ind2)){
+					return true;
+				}
+			}
+			if(!fade(ind2)||!fade(ind3)){
+				continue;
+			}
+			if(lineConnect(ind1,ind2)&&lineConnect(ind2,ind3)&&lineConnect(ind3,ind4)){
+				return true;
+			}
+		}
+		
+		return false;
+		
+	
+	
+	
+	}
+	
+	
+//****************************************为图片绑定事件******************************************//
+	$("#tab img").click(function(){
+	  //alert(location.search);
+	   if(st==0) {timec()};
+	//alert($(this));
+	//alert(isLine(14,26));
+		src1=$(this).attr("src");
+		$(this).addClass("clicked").attr("title","");
+	    //alert($(this).attr("title"));
+		
+		index1=$("img").index($(this)[0])-3;//由于前面难度等级有三个图片，所以减去三
+		//alert(tt);
+	 // alert(index1); 
+		if(src2==0){
+			src2=src1;
+			index2=index1;
+		}else{
+			//if(src1==src2&&index1!=index2&&connect(index1,index2)){
+			if(equalBrand(src1,src2)&&index1!=index2&&connect(index1,index2)){
+				playSound();
+				$("img[class]").attr("title","good !").fadeOut(400); 
+				var a=document.getElementById("timebar").style.width;
+				a=eval(a.substring(0,a.indexOf("px")));
+				a+=30;   //时间进度条变长，获得时间奖励
+				if(a>=400){
+					a=400;
+				}
+				document.getElementById("timebar").style.width=a+"px";
+				count+=1;
+				score=eval(score+5);
+				$("#score").html(score);
+				if(count==tt/2){    //本关通过后需要处理的事如下
+					if(level==9){
+						alert("太厉害了吧，你！打通关了，你已经无敌了！");
+						location.href=location.href.substring(0,location.href.indexOf(".html")+5);
+					}
+					playOkMusic();
+					alert("恭喜过关!获得剩余时间奖励 "+Math.round(a/2)+" 分");
+					score=eval(score+Math.round(a/2));
+					var i=location.href.indexOf("?leve=");
+					if(i<=-1){
+						location.href=location.href+"?leve=2"+score;	
+					}else{
+						var ls=location.href.substring(i+1);
+						var wen=ls.indexOf("?");
+						if(wen!=-1){
+							ls=ls.substring(0,wen);
+						}
+						var level=eval(location.href.substring(i+6,i+7))+1;
+						location.href=location.href.replace(ls,"leve="+level+score);
+					}
+					
+				}
+				//alert($("img")[index1].title);
+				src1=0;
+                src2=0;
+                index1=-1;
+                index2=-1;
+			}else{
+			    $("img[title='']").removeClass();
+				playTing();
+				//$("#bgs").html("<bgsound src='music/Ting.ogg' />");
+				src1=0;
+                src2=0;
+                index1=-1;
+                index2=-1;
+			}
+		}
+	})
+	
+	
+//***********************************菜单栏效果实现****************************************//	
+	$("#menue li[class]").hover(
+ 		 function () {
+    	 	$(this).attr("className","bg");
+  		 },
+  		 function () {
+      		$(this).attr("className","hover");
+  		 }
+	).click(function(){
+		var im="?imgp="+$(this).attr("id");
+		var j=location.href.indexOf("?leve=");
+		var locat;
+		if(j<=-1){
+			locat=location.href;
+		}else{
+			 var ls=location.href.substring(j);
+			  if(ls.substring(1).indexOf("?")!=-1){
+				  ls="?"+ls.substring(1).substring(0,ls.substring(1).indexOf("?"));
+			  }
+			locat=location.href.replace(ls,"");
+		}
+		var i=locat.indexOf("?imgp=");
+		  if(i<=-1){
+		    // alert(location.href.indexOf(im));
+		 	 location.href=locat+im;
+		  }else{
+		  	var ls=locat.substring(i,i+12);
+			//alert(ls);
+			location.href=locat.replace(ls,im);
+			//alert(location.href);
+		  }
+	});
+	
+	
+//***************************困难等级特效****************************************、、	
+	$("#diff li img").click(function () {
+		  var dif="?diff="+$(this).attr("id");
+		  var j=location.href.indexOf("?leve=");
+		  var locat;
+		  if(j<=-1){
+			  locat=location.href;
+		  }else{
+			  var ls=location.href.substring(j);
+			  if(ls.substring(1).indexOf("?")!=-1){
+				  ls="?"+ls.substring(1).substring(0,ls.substring(1).indexOf("?"));
+			  }
+			  locat=location.href.replace(ls,"");
+		  }
+		  var i=locat.indexOf("?diff=");
+		  if(i<=-1){
+		 	 location=locat+dif;
+		  }else{
+		  	var ls=location.href.substring(i,i+12);
+			//alert(ls);
+			location.href=locat.replace(ls,dif);
+			//alert(location.href);
+		  }
+       });
+	   
+//****************************难度等级与图片相对应********************************//	    
+    if(loc.indexOf("?diff")==-1){
+	    $("#07r10c").attr("src","images/diffbg.gif")
+	}else{
+		$("#"+location.href.substring(loc.indexOf("?diff")+6,loc.indexOf("?diff")+12)).attr("src","images/diffbg.gif");
+	}
+    $("#num").html(level);
+	//var music=new Array("bg1.MID","bg2.wma","bg3.mid","bg4.wma","bg5.MID","bg6.mid","bg7.wma","bg8.wma","bg9.wma"); 
+	//$("#bgso").html("<embed src='music/"+music[Math.round(Math.random()*9)]+"' loop='true' hidden='true'></embed>");
+	//alert(music[Math.round(Math.random()*4)]);
+	//alert($("#bgs").html());
+	//alert("xiamiande "+score);	
+	$("#score").html(""+score);
+})
+//******************************时间进度条****************************************//
+
+var st=0;
+var d=0;
+var e=255;
+var f=255;
+function timec(){
+		var w=document.getElementById("timebar").style.width;
+		w=w.substring(0,w.indexOf("px"));
+		w-=1;
+		var p=Math.round(w/4);
+		if(w<=0){
+			playTing();
+			clearTimeout(st);
+			alert("时间结束！再试试吧~~~");
+			location.href=location.href;
+		}else{
+			document.getElementById("timebar").style.width=w+"px";
+			document.getElementById("box").innerHTML="剩余时间"+p+"%";
+			e=Math.round(255*p/100);
+			d=255-e;
+			//alert(e+" , "+d);
+			document.getElementById("timebar").style.backgroundColor="rgb("+d+","+e+","+f+")";
+			st=setTimeout("timec()",200);
+			st=1;
+		}
+}
+
+function changePic(){
+	var i=0;
+	var idArray=new Array();
+	var srcArray=new Array();
+	$("img").each(function(){
+		var itemid = this.id;
+		var src = this.src;
+		if(itemid.indexOf(",")!=-1){
+			var title = this.title;
+			if(title==""){
+				idArray[i] = itemid;
+				srcArray[i] = src;
+				i++;
+			}
+		}
+	});
+	srcArray.sort(function(){return Math.random()>0.5?-1:1;}); 
+	for(var i=0;i<idArray.length;i++){
+		var img=document.getElementById(idArray[i]);
+		img.src =srcArray[i];
+	}
+	
+}
+</script>
+<bgsound src="music/bg1.MID" loop="-1">
+</head>
+<div id="bgs" style="display:none"></div>
+<div id="bgso" style="display:none"></div>
+<body>
+
+
+<div id="main">
+  <div id="box">剩余时间100%</div>
+  <div id="timebar" style="width:400px; background-color:rgb(0,255,255)"></div>
+  
+  <div id="diff">
+  <ul>
+    <li><img src="images/diffbghover.gif" width="30" height="30" id="07r08c" /><p>简单</p></li>
+    <li><img src="images/diffbghover.gif" width="30" height="30" id="07r10c" /><p>普通</p></li>
+    <li><img src="images/diffbghover.gif" width="30" height="30" id="07r14c" /><p>困难</p></li>
+  </ul>
+  </div>
+  <div id="tbox">
+  <table id="tab" border="0" cellspacing="0" cellpadding="0">
+  </table>
+  </div>
+  
+  <ul id="menue">
+    <li id="numli">当前第<span id="num"></span>关</li>
+    <li id="scoreli">得分<span id="score" ></span></li>
+	<li id="scoreli"  onclick="changePic()">重新排列</li>
+  </ul>
+</div>
+
+</body>
+</html>
+<script>
+ //禁止滚动条
+ $(document.body).css({
+   "overflow-x":"hidden",
+   "overflow-y":"auto"
+ });
+
+ var au = document.createElement("audio");
+au.preload="auto";
+au.src = "music/conn.mp3";
+function playSound() {
+    au.play();
+}
+var ting = document.createElement("audio");
+ting.preload="auto";
+ting.src = "music/Ting.ogg";
+function playTing() {
+    ting.play();
+}
+var bgMusic = document.createElement("audio");
+bgMusic.preload="auto";
+bgMusic.loop = "loop";
+bgMusic.src = "music/GameSceneBGM.mp3";
+function playbgMusic() {
+   bgMusic.play();
+}
+
+var okMusic = document.createElement("audio");
+okMusic.preload="auto";
+okMusic.src = "music/ok.mp3";
+function playOkMusic() {
+   okMusic.play();
+}
+</script>
